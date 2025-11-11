@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Code Reader</title>
+    <link rel="stylesheet" href="styles.css" />
+
+    <script src="./node_modules/html5-qrcode/html5-qrcode.min.js"></script>
+  </head>
+  <body>
+    <main>
+      <div id="reader"></div>
+      <div class="result"></div>
+    </main>
+
+    <script src="./node_modules/html5-qrcode/html5-qrcode.min.js"></script>
+
+    <script>
+      console.log(Html5QrcodeScanner);
+      const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+
+      scanner.render(succsses, error);
+
+      function succsses(result) {
+        console.log(result);
+
+        scanner.clear();
+        document.getElementById("reader").remove();
+
+        document.querySelector(".result").textContent = `
+            <h2>Scanned Successfully ✅</h2>
+            <p><a href="${result} target="_blank">${result}</a></p>`;
+      }
+
+      if (result.startsWith("http://") || result.startsWith("https://")) {
+        window.location.href = result;
+      } else {
+        document.querySelector(".result").textContent = `
+             <h2>Scanned Content</h2> 
+             <p>${result}</p>
+             <div class="notification">⚠️ Not a valid link ❌🤷‍♀️</div>`;
+      }
+
+      function error(err) {
+        console.warn(err);
+      }
+    </script>
+  </body>
+</html>
