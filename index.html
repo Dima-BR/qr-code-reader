@@ -1,50 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QR Code Reader</title>
     <link rel="stylesheet" href="styles.css" />
-
-    <script src="./node_modules/html5-qrcode/html5-qrcode.min.js"></script>
-  </head>
-  <body>
+  
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+</head>
+<body>
     <main>
-      <div id="reader"></div>
-      <div class="result"></div>
+        <div id="reader"></div>
+        <div id="result" class="result"></div>
     </main>
 
-    <script src="./node_modules/html5-qrcode/html5-qrcode.min.js"></script>
-
     <script>
-      console.log(Html5QrcodeScanner);
-      const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        // Check if the scanner is available
+        if (typeof Html5QrcodeScanner === 'undefined') {
+            document.getElementById('result').innerHTML = 
+                '<div class="error">QR Scanner library failed to load. Please check your internet connection.</div>';
+        } else {
+            try {
+                const scanner = new Html5QrcodeScanner(
+                    "reader", 
+                    { 
+                        fps: 10, 
+                        qrbox: 250,
+                        supportedScanTypes: [
+                            Html5QrcodeScanType.SCAN_TYPE_QR_CODE
+                        ]
+                    }
+                );
 
-      scanner.render(succsses, error);
+                scanner.render(success, error);
+            } catch (err) {
+                console.error('Scanner initialization error:', err);
+                document.getElementById('result').innerHTML = 
+                    '<div class="error">Failed to initialize QR scanner: ' + err.message + '</div>';
+            }
+        }
 
-      function succsses(result) {
-        console.log(result);
+        function success(result) {
+            console.log('Scanned result:', result);
+            
+            // Clear scanner
+            scanner.clear();
+            document.getElementById("reader").style.display = "none";
+            
+            const resultDiv = document.getElementById("result");
+            
+            // Check if it's a URL
+            if (result.startsWith("http://") || result.startsWith("https://")) {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h2>Scanned Successfully ✅</h2>
+                        <p><a href="${result}" target="_blank">${result}</a></p>
+                        <p>Redirecting in 3 seconds...</p>
+                    </div>`;
+                
+                // Optional: Auto-redirect after delay
+                setTimeout(() => {
+                    window.location.href = result;
+                }, 3000);
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h2>Scanned Content</h2> 
+                        <p><strong>${result}</strong></p>
+                        <div class="notification">⚠️ Not a valid link ❌</div>
+                        <button onclick="resetScanner()">Scan Again</button>
+                    </div>`;
+            }
+        }
 
-        scanner.clear();
-        document.getElementById("reader").remove();
+        function error(err) {
+            // Ignore common non-error messages
+            if (err && !err.toString().includes('NotFoundException')) {
+                console.warn('QR Scanner Error:', err);
+            }
+        }
 
-        document.querySelector(".result").textContent = `
-            <h2>Scanned Successfully ✅</h2>
-            <p><a href="${result} target="_blank">${result}</a></p>`;
-      }
-
-      if (result.startsWith("http://") || result.startsWith("https://")) {
-        window.location.href = result;
-      } else {
-        document.querySelector(".result").textContent = `
-             <h2>Scanned Content</h2> 
-             <p>${result}</p>
-             <div class="notification">⚠️ Not a valid link ❌🤷‍♀️</div>`;
-      }
-
-      function error(err) {
-        console.warn(err);
-      }
+        // Function to reset scanner
+        function resetScanner() {
+            document.getElementById("reader").style.display = "block";
+            document.getElementById("result").innerHTML = "";
+            
+            // Reinitialize scanner
+            const scanner = new Html5QrcodeScanner(
+                "reader", 
+                { 
+                    fps: 10, 
+                    qrbox: 250 
+                }
+            );
+            scanner.render(success, error);
+        }
     </script>
-  </body>
+</body>
 </html>
